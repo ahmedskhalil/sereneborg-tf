@@ -13,13 +13,13 @@ variable "ami_filter" {
   })
 
   default = {
-    name = "itnami-tomcat-*-x86_64-hvm-ebs-nami"
+    name = "bitnami-tomcat-*-x86_64-hvm-ebs-nami"
     owner = "979382823631" #Bitname-ID
   }
 }
 
 variable "environment" {
-  description = "Deployment environment"
+  description = "Default environment"
 
   type = object ({
     name = string

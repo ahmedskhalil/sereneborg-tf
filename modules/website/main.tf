@@ -9,14 +9,14 @@ data "aws_ami" "app_ami" {
         name    = "virtualization-type"
         values  = ["hvm"]
     }
-    owners      = ["979382823631"] # Bitnami
+    owners      = [var.ami_filter.owner]
 }
 
 module "website_vpc" {
   source             = "terraform-aws-modules/vpc/aws"
   name               = var.environment.name
   cidr               = "${var.environment.network_prefix}.0.0/16"
-  azs                = ["us-west-2a","us-west-2b","us-west-2c"] #["eu-central-1a","eu-central-1b"]
+  azs                = ["us-west-2a","us-west-2b","us-west-2c"]
   public_subnets     = ["${var.environment.network_prefix}.101.0/24",
                         "${var.environment.network_prefix}.102.0/24",
                         "${var.environment.network_prefix}.103.0/24"]
@@ -32,7 +32,7 @@ module "website_sg" {
   version               = "4.13.0"
   vpc_id                = module.website_vpc.vpc_id
   name                  = "${var.environment.name}-website"
-  ingress_rules         = ["http-443-tcp","http-80-tcp"]
+  ingress_rules         = ["https-443-tcp","http-80-tcp"]
   ingress_cidr_blocks   = ["0.0.0.0/0"]
   egress_rules          = ["all-all"]
   egress_cidr_blocks    = ["0.0.0.0/0"]
@@ -46,7 +46,7 @@ module "website_alb" {
   load_balancer_type    = "application"
   vpc_id                = module.website_vpc.vpc_id
   subnets               = module.website_vpc.public_subnets
-  security_groups       = [moddule.website_sg.security_group_id]
+  security_groups       = [module.website_sg.security_group_id]
   target_groups         = [
     {
         name_prefix         = "${var.environment.name}-"
@@ -74,8 +74,8 @@ module "website_autoscaling" {
   min_size              = var.asg_min
   max_size              = var.asg_max
   vpc_zone_identifier   = module.website_vpc.public_subnets
-  target_group_arns     = moddule.website_alb.target_group_arns
-  security_groups       = [moddule.website_sg.security_group_id]
+  target_group_arns     = module.website_alb.target_group_arns
+  security_groups       = [module.website_sg.security_group_id]
   instance_type         = var.instance_type
   image_id              = data.aws_ami.app_ami.id
 }
